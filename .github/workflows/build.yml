@@ -1,0 +1,42 @@
+name: Build Pico 2 W firmware
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+      - name: Test key handling
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -Isrc tests/test_keys.c -o /tmp/test_keys
+          /tmp/test_keys
+      - name: Fetch pinned Pico SDK 2.2.0
+        run: |
+          git clone https://github.com/raspberrypi/pico-sdk.git pico-sdk
+          git -C pico-sdk checkout a1438dff1d38bd9c65dbd693f0e5db4b9ae91779
+          git -C pico-sdk submodule update --init lib/tinyusb
+      - name: Build RP2350 ARM firmware
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+        run: |
+          cmake -S . -B build -G Ninja -DPICO_BOARD=pico2_w -DPICO_PLATFORM=rp2350-arm-s -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+      - name: Package
+        run: |
+          mkdir dist
+          cp build/armn_macropad.uf2 dist/ARMN-Macropad-pico2w.uf2
+          cp build/armn_macropad.elf dist/
+          cp README.md dist/
+          git rev-parse HEAD > dist/SOURCE-COMMIT.txt
+          cd dist
+          sha256sum ARMN-Macropad-pico2w.uf2 > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ARMN-Macropad-pico2w
+          path: dist/
+          if-no-files-found: error
