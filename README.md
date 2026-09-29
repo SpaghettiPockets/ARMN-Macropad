@@ -10,7 +10,7 @@ Bluetooth/Wi-Fi er ikke aktivert. Ingen automatisk firmware-deep-sleep.
 ## Lodding
 
 Se kortet fra **komponentsiden med USB-kontakten øverst**.
-Alle tilkoblingene nedenfor er på **høyre langside**, samme side som VBUS og VSYS.
+Alle switchtilkoblingene nedenfor er på **høyre langside**, samme side som VBUS og VSYS.
 Fysiske pinnumre er ikke det samme som GPIO-numre.
 
 | Knapp i ønsket rekkefølge | GPIO | Fysisk pinne | Andre switchbein |
@@ -40,6 +40,80 @@ GP22 (pinne 29) ---- [ N ] ----+
 
 Pinnevalget er kontrollert mot [Raspberry Pis offisielle Pico 2 W-pinout](https://pip-assets.raspberrypi.com/categories/1088-raspberry-pi-pico-2-w/documents/RP-008305-DS-1-pico-2-w-pinout.pdf).
 
+## USB-C-kontakt via testpads
+
+Dette gjelder et **USB-C-hunnkontakt/breakout-kort for USB 2.0-data og 5 V**.
+Den konkrete modellen er ikke identifisert: følg signalnavnene på kortet og produsentens
+skjema, ikke en antatt venstre/høyre-rekkefølge på headeren. Et kort med bare strømuttak
+uten D+ og D− kan ikke brukes som USB-tastaturtilkobling. Ikke bruk en PD-trigger som
+forhandler frem høyere spenning enn 5 V.
+
+### De fire ledningene
+
+| USB-C-kortets signal | Lodd til på Pico 2 W | Funksjon |
+|---|---|---|
+| VBUS / 5V / V | **VBUS, fysisk pinne 40** | USB-strøm inn |
+| GND / G | **TP1** | Jord ved USB-datalinjene |
+| D− / D- / DM | **TP2** | USB data minus |
+| D+ / DP | **TP3** | USB data pluss |
+
+TP1–TP3 er testpads på **undersiden**. Finn dem etter TP-navnene i
+[Pico 2 W-databladet, avsnitt 2.1 og komponenttegningen i vedlegg B](https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf).
+Når du snur kortet, speilvendes høyre/venstre sammenlignet med switchoppskriften over.
+Pinne 40 er VBUS ved enden med den eksisterende USB-kontakten.
+**TP5 er ikke VBUS på Pico 2 W.** La TP4, TP5 og TP6 være urørt i denne oppkoblingen.
+Koble USB-C-kortets 5 V til VBUS som angitt, ikke til 3V3 eller en GPIO.
+
+```text
+USB-C-breakout                    Pico 2 W
+VBUS / 5V ---------------------- VBUS (fysisk pinne 40)
+GND ---------------------------- TP1
+D-  ---------------------------- TP2
+D+  ---------------------------- TP3
+```
+
+### CC1 og CC2 på USB-C-kortet
+
+For en vanlig USB-C-hunnkontakt som skal fungere med en USB-C-til-USB-C-kabel,
+må **CC1 og CC2 ha hver sin 5,1 kΩ-motstand til GND**. Mange breakout-kort har dem
+allerede montert; kontroller skjemaet før du legger til flere.
+
+```text
+CC1 ---- [5,1 kΩ] ---- GND
+CC2 ---- [5,1 kΩ] ---- GND
+```
+
+Hvis de mangler og CC-pinnene er tilgjengelige, monter én motstand fra hver CC-pin
+til jord på breakout-kortet. **Ikke kortslutt CC1 og CC2 sammen**, og ikke koble dem
+til Picoens GPIO-er. Har kortet bare fire loddepunkter, må du fortsatt bekrefte at
+CC-motstandene finnes på kortet. Se et dokumentert eksempel hos
+[Adafruit](https://www.adafruit.com/product/4090).
+Hvis breakout-kortet eksponerer begge USB 2.0-datapar separat, skal A6/B6 (D+) kobles
+sammen ved kontakten, og A7/B7 (D−) kobles sammen ved kontakten. På kort med ett D+/D−-par
+er dette normalt allerede gjort; kontroller kortets skjema.
+
+### Lodding og kontroll
+
+1. Koble fra all strøm. Fortinn ledningsendene og testpadsene med litt tinn og flussmiddel.
+2. Bruk korte, tynne, isolerte ledninger. Før D+ og D− sammen, gjerne som et lett tvunnet
+   par, og hold lengden så kort som praktisk mulig inne i kabinettet.
+3. Lodd etter tabellen. Bruk korte varmeøkter og unngå å dra i ledningen mens tinnet
+   størkner; testpads tåler lite mekanisk belastning.
+4. Fest USB-C-kortet mekanisk til kabinettet, og gi ledningene strekkavlastning slik
+   at innsetting av kabelen ikke belaster Picoens testpads.
+5. Med strømmen frakoblet: kontroller forbindelsene med multimeter og se etter
+   loddebroer, særlig mellom D+/D− og mellom VBUS/GND. Ikke sett på strøm ved en
+   vedvarende kortslutning mellom VBUS og GND.
+6. Koble til datamaskinen gjennom **kun USB-C-kontakten** med en datakabel.
+   Test både normal tastaturdrift og BOOTSEL-flashing. Test også begge orienteringer
+   av USB-C-pluggen; feil i CC-/datakoblingen kan gi forskjellig resultat når pluggen snus.
+
+**Bruk bare én USB-port om gangen.** Den nye kontakten deler VBUS og datalinjer med
+Picoens eksisterende micro-USB-port. Ikke koble begge til datamaskin/strøm samtidig;
+det kan forbinde to USB-strømkilder og to verter direkte.
+Oppkoblingen krever ingen firmwareendring. Fysisk funksjon og ditt konkrete
+USB-C-breakout-kort er ennå ikke verifisert.
+
 ## Flashing
 
 1. Last ned **ARMN-Macropad-pico2w.uf2** fra repoets Releases.
@@ -50,6 +124,7 @@ Pinnevalget er kontrollert mot [Raspberry Pis offisielle Pico 2 W-pinout](https:
 5. Åpne en teksteditor og prøv knappene: `a`, `r`, `m`, `n`.
 
 BOOTSEL kan brukes igjen ved senere oppdateringer. Ingen programmerer eller Python-installasjon på kortet trengs.
+Den nye USB-C-kontakten kan også brukes til flashing når den er koblet som beskrevet over.
 Ikke bruk en UF2 for den eldre RP2040/Pico W.
 
 ## Verifisering på maskinvaren
