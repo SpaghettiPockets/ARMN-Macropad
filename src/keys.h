@@ -6,7 +6,7 @@
 
 #define KEY_COUNT 4
 #define DEBOUNCE_MS 5u
-static const uint8_t key_pins[KEY_COUNT] = {16, 18, 20, 22};
+static const uint8_t key_pins[KEY_COUNT] = {16, 18, 20, 28};
 /* USB HID Keyboard usages: A, R, M, N. No implicit Shift. */
 static const uint8_t key_codes[KEY_COUNT] = {0x04, 0x15, 0x10, 0x11};
 typedef struct {

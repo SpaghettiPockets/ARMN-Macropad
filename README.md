@@ -18,7 +18,12 @@ Fysiske pinnumre er ikke det samme som GPIO-numre.
 | 1 — A | GP16 | 21 | GND |
 | 2 — R | GP18 | 24 | GND |
 | 3 — M | GP20 | 26 | GND |
-| 4 — N | GP22 | 29 | GND |
+| 4 — N | GP28 / A2 | 34 | GND |
+
+Fra **v1.0.1** bruker N-knappen GP28 (fysisk pinne 34). GP28 fungerer her som vanlig
+digital inngang; A2/ADC2 er en alternativ analogfunksjon som ikke brukes.
+Den eldre **v1.0.0 bruker GP22 (pinne 29)**, så flash v1.0.1 ved denne ledningsføringen.
+Ikke forveksle **GP28 (pinne 34)** med **fysisk pinne 28 (GND)**.
 
 1. Koble fra USB før lodding.
 2. Lodd ett elektrisk kontaktbein på hver switch til GPIO-en i tabellen.
@@ -35,7 +40,7 @@ ingen eksterne motstander trengs for denne direktekoblingen.
 GP16 (pinne 21) ---- [ A ] ----+
 GP18 (pinne 24) ---- [ R ] ----+
 GP20 (pinne 26) ---- [ M ] ----+---- GND (pinne 28)
-GP22 (pinne 29) ---- [ N ] ----+
+GP28 (pinne 34) ---- [ N ] ----+
 ```
 
 Pinnevalget er kontrollert mot [Raspberry Pis offisielle Pico 2 W-pinout](https://pip-assets.raspberrypi.com/categories/1088-raspberry-pi-pico-2-w/documents/RP-008305-DS-1-pico-2-w-pinout.pdf).
